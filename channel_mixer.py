@@ -2,7 +2,6 @@ from PIL import Image, ImageTk
 import tkinter as tk
 from tkinter import filedialog, messagebox
 from tkinter import ttk
-import numpy as np
 
 class ChannelMixerApp:
     def __init__(self, root):
@@ -228,10 +227,10 @@ class ChannelMixerApp:
         # 获取第一张图片的尺寸，其他图片将被调整为该尺寸
         width, height = self.images[0].size
         
-        # 创建RGB通道数组
-        r_channel = np.zeros((height, width), dtype=np.uint8)
-        g_channel = np.zeros((height, width), dtype=np.uint8)
-        b_channel = np.zeros((height, width), dtype=np.uint8)
+        # 创建空的RGB通道
+        r_channel = None
+        g_channel = None
+        b_channel = None
         
         # 处理每张图片，将其分配到对应的通道
         for img, channel in zip(self.images, self.channels):
@@ -239,20 +238,17 @@ class ChannelMixerApp:
             resized_img = img.resize((width, height))
             # 转换为灰度图
             gray_img = resized_img.convert("L")
-            # 转换为numpy数组
-            img_array = np.array(gray_img)
             
             # 分配到对应的通道
             if channel == "R":
-                r_channel = img_array
+                r_channel = gray_img
             elif channel == "G":
-                g_channel = img_array
+                g_channel = gray_img
             elif channel == "B":
-                b_channel = img_array
+                b_channel = gray_img
         
         # 合并通道
-        rgb_array = np.stack((r_channel, g_channel, b_channel), axis=-1)
-        self.result_image = Image.fromarray(rgb_array)
+        self.result_image = Image.merge("RGB", (r_channel, g_channel, b_channel))
         
         # 显示结果图片（正方形格式）
         result_img = self.result_image.copy()
@@ -306,9 +302,10 @@ class ChannelMixerApp:
         # 创建尺寸选择对话框
         size_window = tk.Toplevel(self.root)
         size_window.title("选择导出尺寸")
-        size_window.geometry("300x250")
+        size_window.geometry("350x300")  # 增大对话框尺寸
         size_window.resizable(False, False)
         size_window.grab_set()  # 模态窗口
+        size_window.configure(bg="white")  # 设置背景色为白色
         
         # 居中显示
         size_window.update_idletasks()
@@ -360,11 +357,17 @@ class ChannelMixerApp:
             size_window.destroy()
         
         # 按钮框架
-        btn_frame = ttk.Frame(size_window)
-        btn_frame.pack(pady=20)
+        btn_frame = tk.Frame(size_window, bg="white")
+        btn_frame.pack(pady=30)
         
-        ttk.Button(btn_frame, text="保存", command=on_save, style="TButton").pack(side=tk.LEFT, padx=10)
-        ttk.Button(btn_frame, text="取消", command=on_cancel, style="TButton").pack(side=tk.LEFT, padx=10)
+        # 使用普通的tk.Button，确保按钮可见
+        save_btn = tk.Button(btn_frame, text="保存", command=on_save, font=(".Microsoft YaHei UI", 10), 
+                            bg="#4a90e2", fg="white", width=10, height=1)
+        save_btn.pack(side=tk.LEFT, padx=15)
+        
+        cancel_btn = tk.Button(btn_frame, text="取消", command=on_cancel, font=(".Microsoft YaHei UI", 10), 
+                              bg="#999999", fg="white", width=10, height=1)
+        cancel_btn.pack(side=tk.LEFT, padx=15)
 
 if __name__ == "__main__":
     root = tk.Tk()
